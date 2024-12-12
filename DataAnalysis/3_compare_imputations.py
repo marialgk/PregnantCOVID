@@ -60,7 +60,7 @@ def melt_table(key_value):
 
     # Keep only the non binary columns.
     # It makes no sense to represent them in the boxplot.
-    non_bin_cols = ['weight_gain_during_preg', 
+    non_bin_cols = ['weight_gain_during_preg',
                     'dad_age',
                     'EPS10',
                     'income',

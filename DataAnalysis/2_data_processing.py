@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 
-#%% IMPORT LIBRARIES
-
-# Standard libraries
-import os
+#%%########################### IMPORT STUFF ###################################
 
 # Matrices and dataframes
 import pandas as pd
-import numpy as np
 from pandas.core.groupby.groupby import MultiIndex
 
 # Data pre-processing
@@ -16,14 +12,13 @@ from sklearn.impute import KNNImputer
 from sklearn.preprocessing import StandardScaler
 
 
-#%% LOAD DATASET
+#%%############################ LOAD DATASET ##################################
 
 FILE = 'final_dataset.tsv'
 df_full = pd.read_csv(FILE, sep='\t', header=0, index_col='hash')
 df_full = df_full.drop(columns='Unnamed: 0')
 
-
-#%% COUNT MISSING DATA IN ALL THE DATASET
+#%%################### COUNT MISSING DATA IN ALL THE DATASET ###################
 
 
 def count_all_missing(df):
@@ -42,59 +37,32 @@ def count_all_missing(df):
 
 count_all_missing(df_full)
 
-#%% RECODE RACE
 
-def marginalized(series):
-    """
-    Recode racial identity.
-
-    Raw data: 4 boolean variables:
-        White: yes / no
-        Black: yes / no
-        Parda: yes / no
-        Yellow: yes / no
-        (there are no indigeous persons on our sample)
-
-    After data preprocessing: 1 boolean variable.
-        Marginalized racial group: True / False
-    """
-    if series['race_white_bool'] == 1 or series['race_yellow_bool'] == 1:
-        return 0
-    else:
-        return 1
-
-df_full['race_marginalized_group'] = df_full.apply(marginalized, axis=1)
-
-
-#%% SUM PRENATAL APPOINTMENTS
-
-
-def sum_appointments(series):
-    appointments = series[['prenatal_appointments_1st_trim',
-                           'prenatal_appointments_2nd_trim',
-                           'prenatal_appointments_3rd_trim']]
-    if pd.notna(appointments).all():
-        return sum(appointments)
-    else:
-        return np.nan
-
-df_full['prenatal_appointments_sum'] = df_full.apply(sum_appointments, axis=1)
-
-
-#%% SELECT ROWS AND COLUMNS
+#%%######################### SELECT ROWS AND COLUMNS ##########################
 
 # Select only patients that were assigned to a group
 df = df_full[df_full['group'].notna()]
 
-
-# Select chosen variables, which are in an excel file.
-columns = pd.read_excel('variaveis_selecionadas_ml.xlsx', sheet_name='new')
-columns = columns[columns['Possível risco para COVID-19'] != False]
+columns = ['weight_gain_during_preg',
+           'dad_age',
+           'EPS10',
+           'income',
+           'lifetime_stress_summary',
+           'mom_age',
+           'mom_education',
+           'pregnancy_stress_summary',
+           'prenatal_bmi',
+           'STAIS',
+           'STAIT',
+           'works',
+           'group',
+           'race_marginalized_group',
+           'prenatal_appointments_sum',
+           'violent_crimes']
 
 df = df[columns]
 
-
-#%% RECODE GROUP
+#%%############################# RECODE GROUP ################################
 
 # The classifier does not understand booleans.
 # Change them to numbers.
@@ -105,7 +73,7 @@ df = df.replace({False: 0, True: 1})
 df['group'] = df['group'].replace({'CONTROL': 0, 'COVID': 1})
 
 
-#%% DATA CLEANING FUNCTIONS
+#%%######################## DATA CLEANING FUNCTIONS ###########################
 
 def clean_column_names(df):
     '''
@@ -198,7 +166,7 @@ def variance_threshold(df,threshold):
     new_cols = var_thres.get_support()
     return df.iloc[:,new_cols]
 
-#%% DATA CLEANING #
+#%%########################### DATA CLEANING ##################################
 
 # Remove invalid characters from column names.
 df = clean_column_names(df)
@@ -227,13 +195,11 @@ df_clean_var = variance_threshold(df_clean, 0.05)
 count_all_missing(df_clean_var)
 
 
-#%% NORMALIZE DATA
+#%%############################# NORMALIZE DATA ###############################
 
-# z = (x - mean) / std
 scaler = StandardScaler()
 
-# Do not change binary columns. Only the non-binary will be standardized.
-non_bin_cols = ['weight_gain_during_preg', 
+non_bin_cols = ['weight_gain_during_preg',
                 'dad_age',
                 'EPS10',
                 'income',
@@ -249,13 +215,13 @@ non_bin_cols = ['weight_gain_during_preg',
 
 df_clean_var[non_bin_cols] = scaler.fit_transform(df_clean_var[non_bin_cols])
 
-df_clean_var.to_csv('not_imputed_dataset.tsv', sep='\t')
+df_clean_var.to_csv('not_imputed_norm_dataset_7vars.tsv', sep='\t')
 
 
-#%% KNN IMPUTATION
+#%%############################# KNN IMPUTATION ###############################
 
 # This is the main parameter for the KNN imputation.
-# We have run several times with values: 3, 4, 5, 7, 10.
+# I've run several times with different values.
 k_knn = 3
 
 imputer = KNNImputer(n_neighbors=k_knn)
@@ -264,6 +230,4 @@ imputed_df = pd.DataFrame(imputed_df,
                           columns=df_clean_var.columns,
                           index=df_clean_var.index)
 
-#%% SAVE FILE
-
-imputed_df.to_csv(f'imputed_dataset_knn{k_knn}.tsv', sep='\t')
+imputed_df.to_csv(f'imputed_norm_dataset_knn{k_knn}_7vars.tsv', sep='\t')

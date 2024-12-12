@@ -5,7 +5,7 @@ Created on Wed Apr 24 12:00:46 2024
 @author: maria
 """
 
-#%% IMPORT LIBRARIES
+#%%######################## IMPORT LIBRARIES ##################################
 
 # Standard libraries
 from datetime import datetime
@@ -18,6 +18,7 @@ import pandas as pd
 
 # Figure plotting
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Machine learning
 from sklearn.model_selection import RepeatedStratifiedKFold
@@ -30,15 +31,16 @@ from sklearn.metrics import roc_auc_score
 
 import shap
 
-#%% LOAD DATASET
+#%%############################## LOAD DATASET ################################
 
+PATH = 'H:\Meu Drive\parteI\machine_learning/v14/shap/15vars_pediatrics'
 os.chdir(PATH)
 
-FILE = 'imputed_dataset_knn3.tsv'
+FILE = 'imputed_norm_dataset_knn3_15vars.tsv'
 df = pd.read_csv(FILE, sep='\t', header=0, index_col='index')
 
 
-#%% SHAP CONSOLIDATED ANALYSIS FUNCTIONS
+#%%################ SHAP CONSOLIDATED ANALYSIS FUNCTIONS ######################
 
 def consolidated_SHAP(df,
                      clf_model,
@@ -58,6 +60,7 @@ def consolidated_SHAP(df,
     list_accuracy    = []
     list_f1          = []
     list_roc         = []
+    true_guess  = {i:[0, 0] for i in df.index}
 
     # Set classifier
     clf_model = clf_model(**params)
@@ -82,7 +85,7 @@ def consolidated_SHAP(df,
         clf_model.fit(X_train_shap, y_train_shap.values.ravel())
 
         if calc_perf == True:
-            y_pred   = clf_model.predict(X_test_shap)
+            y_pred  = clf_model.predict(X_test_shap)
 
             accuracy = accuracy_score(y_test_shap, y_pred)
             list_accuracy.append(accuracy)
@@ -92,7 +95,16 @@ def consolidated_SHAP(df,
             
             roc = roc_auc_score(y_test_shap, y_pred)
             list_roc.append(roc)
-
+            
+            y_error = pd.Series(y_pred, name='y_hat',index=y_test_shap.index)
+            y_error = pd.concat([y_test_shap, y_error], axis=1)
+            correct = (lambda x: 1 if x['group'] == x['y_hat'] else 0)
+            y_error['is_correct'] = y_error.apply(correct, axis=1)
+            for sample, content in y_error.iterrows():
+                true_guess[sample][0] += 1
+                if content['is_correct'] == 1:
+                    true_guess[sample][1] += 1
+            
         # explaining model
         print('Running explainer...')
         explainer   = shap.Explainer(clf_model.predict, X_test_shap)
@@ -119,8 +131,25 @@ def consolidated_SHAP(df,
         print(f'Mean accuracy: {statistics.mean(list_accuracy)}')
         print(f'Mean f1-score: {statistics.mean(list_f1)}')
         print(f'Mean ROC-AUC : {statistics.mean(list_roc)}')
+        
+        metrics = pd.DataFrame.from_dict({'Accuracy':list_accuracy,
+                                          'F1-score':list_f1,
+                                          'ROC-AUC' :list_roc},
+                                         orient='columns')
+        metrics = metrics.melt()
+        
+        plt.cla()
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+        sns.boxplot(data=metrics, x='variable', y='value', ax=ax)
+        fig.savefig('metrics_consoliated_shap.png')        
+        
+        true_guess = pd.DataFrame.from_dict(true_guess,
+                                            orient='index',
+                                            columns=['guessed', 'correct'])
+        true_guess['true_freq'] = true_guess['correct'] / true_guess['guessed']
+        return shap_values, X_test_shap, true_guess
 
-    return shap_values, X_test_shap #, list_accuracy
+    return shap_values, X_test_shap
 
 
 
@@ -153,107 +182,54 @@ def main_shap(df,
               n_splits,
               n_repeats,
               max_vars=10,
-              sufix='',
-              calc_perf=False):
+              sufix=''):
 
     print(f'Running experiment: {sufix}')
 
-    shap_values, X_test_shap = consolidated_SHAP(df,
-                                                 clf_model,
-                                                 params,
-                                                 group_col,
-                                                 fileprefix,
-                                                 n_splits,
-                                                 n_repeats,
-                                                 calc_perf=calc_perf)
+    shap_values, X_test_shap, true_guess = consolidated_SHAP(df,
+                                                             clf_model,
+                                                             params,
+                                                             group_col,
+                                                             fileprefix,
+                                                             n_splits,
+                                                             n_repeats,
+                                                             calc_perf=True)
 
     shap_values_df = pd.DataFrame(data=shap_values,
                                   columns=X_test_shap.columns,
                                   index=X_test_shap.index)
-    shap_values_df.to_csv(f'shap_values_{sufix}_{n_repeats}X{n_splits}.txt',
-                          sep='\t')
+    shap_values_tg = pd.merge(shap_values_df,
+                              true_guess,
+                              how='left',
+                              left_index=True,
+                              right_index=True)
+    shap_values_tg.to_csv(f'shap_values_{sufix}_{n_repeats}X{n_splits}.txt',
+                         sep='\t')
 
     # Create file name.
     fileprefix = str(datetime.now().strftime('%Y%m%d_%H%M%S'))
     figname = f'{fileprefix}.pdf'
 
     # Violin plot
+    plt.cla()
     violin_plot(shap_values,
                 X_test_shap,
                 f'violin_{sufix}_{figname}',
                 max_vars=max_vars)
 
-    return shap_values_df
+    return shap_values_df, true_guess
 
 
-#%% RUN CONSOLIDATED SHAP ANALYSIS
+#%%#################### RUN CONSOLIDATED SHAP ANALYSIS ########################
 
 fileprefix = f'{PATH}'
 
-main_shap(df,
+a, b = main_shap(df,
           clf_model=LogisticRegression,
-          params={'verbose': 2, 'solver': 'liblinear', 'penalty': 'l2', 'n_jobs': -1, 'max_iter': 1000, 'class_weight': 'balanced', 'C': 1},
+          params={'verbose': 0, 'solver': 'liblinear', 'penalty': 'l2', 'n_jobs': -1, 'max_iter': 1000, 'class_weight': 'balanced', 'C': 0.1},
           group_col='group',
           fileprefix=fileprefix,
           n_splits=5,
-          n_repeats=25,
+          n_repeats=30,
           max_vars=30,
-          sufix='LR')
-
-#%% SINGLE SHAP
-
-def single_shap(df,
-                clf_model,
-                params,
-                group_col='group',
-                sufix=''):
-
-    # Prepare class and features
-    X = df.drop(columns=group_col)
-    y = df[group_col].to_frame()
-
-    # Set classifier
-    print('Training model...')
-    clf_model = clf_model(**params)
-    clf_model.fit(X, y.values.ravel())
-
-    # Run single SHAP
-    print('running SHAP...')
-    explainer = shap.Explainer(clf_model.predict, X)
-    shap_values = explainer(X)
-
-    # Figure name
-    fileprefix = str(datetime.now().strftime('%Y%m%d_%H%M%S'))
-    figname = f'{fileprefix}_{sufix}.pdf'
-
-    # Waterfall plot
-    for i, id in enumerate(X.index):
-        prediction = round(shap_values[i].base_values + sum(shap_values[i].values))
-        real = y.iloc[i][group_col]
-        if real == 1:
-            if prediction == 0:
-                error = 'False negative'
-            else:
-                error = 'True positive'
-        elif real == 0:
-            if prediction == 0:
-                error = 'True negative'
-            else:
-                error = 'False positive'
-        print(f'Making waterfall plot for a {error}...')
-        plt.clf()
-        shap.plots.waterfall(shap_values[i],
-                             show=False)
-        plt.title(f'{error}_{i}')
-        plt.savefig(f'waterfall_{error}_{id}_{figname}',
-                    format='pdf',
-                    dpi=600,
-                    bbox_inches='tight')
-        plt.clf()
-
-
-single_shap(df,
-            LogisticRegression,
-            params={'verbose': 2, 'solver': 'liblinear', 'penalty': 'l2', 'n_jobs': -1, 'max_iter': 1000, 'class_weight': 'balanced', 'C': 1},
-            group_col='group',
-            sufix='LR')
+          sufix='LR_guesses')
