@@ -236,9 +236,9 @@ def compare_performance(df,
 
     return performance_metrics
 
-#%% RUN THE ANALYSIS
+#%%######################### RUN THE ANALYSIS #################################
 
-models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30], 
+models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],  # 6912 comb
                                    'min_samples_leaf': [2, 4, 5, 7],
                                    'min_samples_split': [2, 5, 10],
                                    'n_estimators': [50, 100, 200, 600, 1000, 1500],
@@ -247,7 +247,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                                    'max_features':['sqrt', 'log2'],
                                    'n_jobs':[-1]},
 
-          LogisticRegression: [{'penalty':['l2', None],     
+          LogisticRegression: [{'penalty':['l2', None],         # 60 comb
                                 'class_weight':[None, 'balanced'],
                                 'solver':['lbfgs', 'newton-cholesky'],
                                 'C':[0.1, 1, 10, 100, 1000],
@@ -261,7 +261,8 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                                 'n_jobs':[-1], 'max_iter':[1000], 'verbose':[2]
                                 }],
 
-          LGBMClassifier: [{'objective':['binary'],
+          LGBMClassifier: [  # 57.6k comb
+                            {'objective':['binary'],
                             'boosting_type' : ['dart', 'gbdt'],
                             'max_bin':[50, 150, 255, 300],
                             'max_depth' : [3],
@@ -270,6 +271,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[150],
                             'learning_rate':[0.005, 0.01],
                             'extra_trees':[True]},
@@ -282,6 +284,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[100],
                             'learning_rate':[0.025, 0.05],
                             'extra_trees':[True]},
@@ -294,6 +297,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[50],
                             'learning_rate':[0.1, 0.2],
                             'extra_trees':[True]},
@@ -307,6 +311,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[150],
                             'learning_rate':[0.005, 0.01],
                             'extra_trees':[True]},
@@ -319,6 +324,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[100],
                             'learning_rate':[0.025, 0.05],
                             'extra_trees':[True]},
@@ -331,6 +337,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[50],
                             'learning_rate':[0.1, 0.2],
                             'extra_trees':[True]},
@@ -344,6 +351,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[150],
                             'learning_rate':[0.005, 0.01],
                             'extra_trees':[True]},
@@ -356,6 +364,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[100],
                             'learning_rate':[0.025, 0.05],
                             'extra_trees':[True]},
@@ -368,6 +377,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[50],
                             'learning_rate':[0.1, 0.2],
                             'extra_trees':[True]},
@@ -381,6 +391,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[150],
                             'learning_rate':[0.005, 0.01],
                             'extra_trees':[True]},
@@ -393,6 +404,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[100],
                             'learning_rate':[0.025, 0.05],
                             'extra_trees':[True]},
@@ -405,12 +417,13 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                             'lambda_l1':[1, 0.1, 0.01, 0.0001, 0],
                             'lambda_l2':[1, 0.1, 0.01, 0.0001, 0],
                             'feature_fraction':[0.5, 0.8, 1],
+                            # 'early_stopping_rounds':[0.1],
                             'num_iterations':[50],
                             'learning_rate':[0.1, 0.2],
                             'extra_trees':[True]}
                             ],
 
-          XGBClassifier: {'alpha':[1, 0.1, 0.01, 0.0001, 0],
+          XGBClassifier: {'alpha':[1, 0.1, 0.01, 0.0001, 0],  # 54k comb
                           'colsample_bytree': [0.6, 0.8, 1.0],
                           'eta':[0.01, 0.05, 0.1, 0.2],
                           'gamma': [0,0.5, 1, 2, 5],
@@ -420,7 +433,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                           'subsample': [0.6, 0.8, 1.0]
                            },
 
-          CatBoostClassifier: {'iterations': [50, 100, 150, 300, 500],
+          CatBoostClassifier: {'iterations': [50, 100, 150, 300, 500],  # 30k comb
                                'depth': [3, 4, 5, 6, 7, 8, 9, 10],
                                'loss_function': ['Logloss', 'CrossEntropy'],
                                'l2_leaf_reg': [1, 0.1, 0.01, 0.0001, 0],
@@ -431,11 +444,11 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
 
           DummyClassifier: {'strategy': ['stratified']},
 
-          SVC:{'C':[0.1, 1, 10, 100, 1000],
+          SVC:{'C':[0.1, 1, 10, 100, 1000],  # 75 comb
                'gamma':[1, 0.1, 0.01, 0.001, 0.0001],
                'kernel':['rbf', 'linear', 'poly']},
 
-          KNeighborsClassifier:{'n_neighbors':[ 2, 3, 4, 5, 6, 7, 8, 9, 10,
+          KNeighborsClassifier:{'n_neighbors':[ 2, 3, 4, 5, 6, 7, 8, 9, 10,  #174 comb
                                                11, 12, 13, 14, 15, 16, 17, 18,
                                                19, 20, 21, 22, 23, 24, 25, 26,
                                                27, 28, 29, 30],
@@ -443,7 +456,7 @@ models = {RandomForestClassifier: {'max_depth': [None, 2, 3, 4, 5, 10, 20, 30],
                                 'algorithm':['ball_tree', 'kd_tree', 'brute'],
                                 'n_jobs':[-1]},
 
-          GaussianNB:{'var_smoothing':np.logspace(0,-9, num=100)}
+          GaussianNB:{'var_smoothing':np.logspace(0,-9, num=100)}  #100 comb
           }
 
 performance_metrics = compare_performance(df,
@@ -455,5 +468,5 @@ performance_metrics = compare_performance(df,
                                           cv_repeats=25)
 
 sufix = datetime.now().strftime('%Y%m%d_%H%M%S')
-performance_metrics.to_csv(f'performance_metrics_classifier_{sufix}.tsv', sep='\t')
+performance_metrics.to_csv(f'performance_metrics_risk_{sufix}.tsv', sep='\t')
 
