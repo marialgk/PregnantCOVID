@@ -276,3 +276,19 @@ boxplot_sorted(df_boxplot, 'recall')
 boxplot_sorted(df_boxplot, 'f1score')
 boxplot_sorted(df_boxplot, 'precision')
 boxplot_sorted(df_boxplot, 'Jaccard')
+
+#%% Figure 2D
+
+chosen = df_boxplot[df_boxplot['hyperparams'] == "{'verbose': 2, 'solver': 'liblinear', 'penalty': 'l2', 'n_jobs': -1, 'max_iter': 1000, 'class_weight': 'balanced', 'C': 1}"]
+
+chosen = chosen[chosen['test'].isin(['accuracy', 'f1score', 'ROC_AUC'])]
+
+fig, ax = plt.subplots(figsize=(8, 8))
+sns.set_style("whitegrid")
+sns.barplot(chosen,
+            x="test",
+            y="score",
+            ax=ax,
+            color='cornflowerblue',
+            errorbar='sd',
+            estimator='mean')
