@@ -18,7 +18,7 @@ model <- glm(delivery_complications ~ STAIT * group, family = binomial, data = d
 data$predicted_prob <- predict(model, type = "response")
 
 # 3. Criar tercis de STAI_trait
-data$STAI_tercil <- cut(data$mom_age,
+data$STAI_tercil <- cut(data$STAIT,
                         breaks = quantile(data$STAIT, probs = c(0, 1/3, 2/3, 1)),
                         include.lowest = TRUE,
                        labels = c("Lower", "Moderate", "Higher"))
@@ -34,4 +34,5 @@ ggplot(data, aes(x = STAI_tercil, y = predicted_prob, fill = group_str)) +
     x = "Trait anxiety",
     fill = "COVID"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  scale_fill_manual(values = c("#3035BF", "#FFCD00"))
