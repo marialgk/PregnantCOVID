@@ -1,19 +1,13 @@
 ## Script - Maria Laura (Moderacao e analise de caminhos)
-library(rockchalk)
-library(boot)
-library("psych")
 library(lavaan)
 library(knitr)
-library(semPlot)
 library(tidyverse)
-library(rquery)
-library(simpleboot)
 
 # Set working directory
-setwd("H:/Meu Drive/parteI/machine_learning/v14/SEM/4vars")
+setwd("H:/Meu Drive/parteI/machine_learning/v15")
 
 # Load data frame
-data <- read.csv("data.tsv", header=TRUE, sep='\t')
+data1 <- read.csv("sensitivity.tsv", header=TRUE, sep='\t')
 
 ### Package 'Lavaan' ###
 # Creating interaction term prior of sem running
@@ -38,3 +32,9 @@ model_sem = sem(mod_model, data=data,
 summary(model_sem, standardized=TRUE) 
 
 fitMeasures(model_sem, c("chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr"))
+
+
+parameterEstimates(model_sem, ci = TRUE, level = 0.95, boot.ci.type = "perc")
+
+boot_est <- lavInspect(model_sem, "boot")
+hist(boot_est[, "b3"], breaks=50, xlim=c(-0.15,0.5), ylim=c(0,60))
